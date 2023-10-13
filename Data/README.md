@@ -1,3 +1,3 @@
 ### Dataset Directory
 
-- The contents box data folder should be placed here. 
+- The contents of the box data folder should be placed here. 

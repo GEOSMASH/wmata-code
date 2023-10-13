@@ -20,7 +20,7 @@ lorem ipsum
   - ##### [Bus Lines and Stops](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Lines%20and%20Stops)
     lorem ipsum
 
-  ***
+  .....
 
 - #### Modeling
 After running the notebooks in [Data Preprocessing](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing) directory sequentially. In the modeling directory, run the Dataframe creation notebook ```(dataframe_creation2.ipynb)``` first before running the r-scripts

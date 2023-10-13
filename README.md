@@ -10,7 +10,7 @@ lorem ipsum
   All the notebooks should be run first, it automatically creates an output folder.
   <br/>
   <br/>
-  Here's a brief overview of all the processing:
+  Here's a brief overview of all the dataset  pre-processing notebooks:
   - ##### [Alphashape walkshed](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Alphashape%20Walkshed)
     lorem ipsum
  

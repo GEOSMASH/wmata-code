@@ -26,7 +26,7 @@ This project is meticulously organized to ensure reproducibility and that users 
   - ##### [Bus Lines and Stops](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Travel%20Time)
     bus_lines_stops contains the code to determine the number of bus lines and bus stops within the walkshed of each metro station. The inputs for this code include the walksheds, General Transit Feed Specification (GTFS) data, and walkshed names/station codes.
   
-  - ##### [Bus Travel Times](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Lines%20and%20Stops)
+  - ##### [Bus Travel Times](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Travel%20Time)
     bus_travel_time_per_track_mile_ML determines the total travel time and travel time per mile by bus for each of the station OD pairs. The input includes the bus travel times provided by WMATA, the results from the OSMNX Auto Travel Time code, and Zhila's AM dataframe for use in comparison.
     
   - ##### [Distance to the Core](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Distance%20to%20the%20Core)

@@ -23,7 +23,7 @@ This project is meticulously organized to ensure reproducibility and that users 
   - ##### [OSMNX Auto Travel Times](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/OSMNX%20Auto%20Travel%20Time)
     This code calculates auto network travel times between each of the OD pairs using OSMNX. We did not include this version of the auto travel times in the final model, but the inputs here are used elsewhere in data preprocessing
   
-  - ##### [Bus Lines and Stops](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Lines%20and%20Stops)
+  - ##### [Bus Lines and Stops](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Travel%20Time)
     bus_lines_stops contains the code to determine the number of bus lines and bus stops within the walkshed of each metro station. The inputs for this code include the walksheds, General Transit Feed Specification (GTFS) data, and walkshed names/station codes.
   
   - ##### [Bus Travel Times](https://github.com/GEOSMASH/wmata-code/tree/main/Data%20Preprocessing/Bus%20Lines%20and%20Stops)

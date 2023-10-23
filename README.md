@@ -1,5 +1,7 @@
 # wmata-code
 ![Python version](https://img.shields.io/badge/python-3.10-blue.svg)
+![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+
 
 This repository contains all the code used for data preprocessing and modelling in the development of the Origin-Destination (OD) land use ridership model for WMATA (Washington Metropolitan Area Transit Authority).
 

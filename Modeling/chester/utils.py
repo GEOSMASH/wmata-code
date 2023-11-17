@@ -20,13 +20,15 @@ configs = load_configs()
 
 
 def prep_col(col, df):
+    df = df.copy()
     x = df[col].values.reshape((-1,1))
-    x[x == 0] = 1
+    x[x == 0] = 0.000001
     return x
 
 def prep_cols(cols, df):
+    df = df.copy()
     x = np.hstack([df[col].values.reshape((-1,1)) for col in cols])
-    x[x == 0] = 1
+    x[x == 0] = 0.000001
     return x
 
 def model_summary(covars, params, pvalues, aic, R2=None, pseudoR2=None):

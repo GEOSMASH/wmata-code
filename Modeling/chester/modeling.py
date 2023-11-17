@@ -17,12 +17,17 @@ def gravity(df, flows, o_vars, d_vars, od_vars, constant=True):
     else:
         covars = o_vars + d_vars + od_vars
     flows, o_vars, d_vars, od_vars = inputs(df, flows, o_vars, d_vars, od_vars)
+    # Force flows to be integers
+    # (the inputs function will have converted zeros to very small decimals)
+    flows = flows.astype(int)
     model = Gravity(flows, o_vars, d_vars, od_vars, 'exp', constant=constant)
     summary = summarize_gravity_model(model, covars)
     return model, summary
 
 def ols(df, flows, o_vars, d_vars, od_vars, constant=True):
-    Y = df[flows]
+    # Force flows to be integers
+    # (the inputs function will have converted zeros to very small decimals)
+    Y = df[flows].astype(int)
     X = df[o_vars + d_vars + od_vars]
     if constant:
         X = sm.add_constant(X)

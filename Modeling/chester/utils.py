@@ -3,6 +3,7 @@ import pandas as pd
 import yaml
 from collections import namedtuple
 import os
+import statsmodels.api as sm
 
 excluded_stations = [
     'Reston Town Center',
@@ -307,6 +308,100 @@ job_station_name_map = {
     'WASHINGTON DULLES INTERNATIONAL AIRPORT': 'Dulles Airport',
 }
 
+auto_miles_station_name_map = {
+    'ADDISON ROAD-SEAT PLEASANT': 'Addison Road',
+    'ANACOSTIA': 'Anacostia',
+    'ARCHIVES-NAVY MEMORIAL-PENN QUARTER': 'Archives',
+    'ARLINGTON CEMETERY': 'Arlington Cemetery',
+    'BALLSTON-MU': 'Ballston-MU',
+    'BENNING ROAD': 'Benning Road',
+    'BETHESDA': 'Bethesda',
+    'BRADDOCK ROAD': 'Braddock Road',
+    'BRANCH AVE': 'Branch Ave',
+    'BROOKLAND-CUA': 'Brookland-CUA',
+    'CAPITOL HEIGHTS': 'Capitol Heights',
+    'CAPITOL SOUTH': 'Capitol South',
+    'CHEVERLY': 'Cheverly',
+    'CLARENDON': 'Clarendon',
+    'CLEVELAND PARK': 'Cleveland Park',
+    'COLLEGE PARK-U OF MD': 'College Park-U of Md',
+    'COLUMBIA HEIGHTS': 'Columbia Heights',
+    'CONGRESS HEIGHTS': 'Congress Heights',
+    'COURT HOUSE': 'Court House',
+    'CRYSTAL CITY': 'Crystal City',
+    'DEANWOOD': 'Deanwood',
+    'DUNN LORING-MERRIFIELD': 'Dunn Loring',
+    'DUPONT CIRCLE': 'Dupont Circle',
+    'EAST FALLS CHURCH': 'East Falls Church',
+    'EASTERN MARKET': 'Eastern Market',
+    'EISENHOWER AVENUE': 'Eisenhower Ave',
+    'FARRAGUT NORTH': 'Farragut North',
+    'FARRAGUT WEST': 'Farragut West',
+    'FEDERAL CENTER SW': 'Federal Center SW',
+    'FEDERAL TRIANGLE': 'Federal Triangle',
+    'FOGGY BOTTOM-GWU': 'Foggy Bottom-GWU',
+    'FOREST GLEN': 'Forest Glen',
+    'FORT TOTTEN': 'Fort Totten',
+    'FRANCONIA-SPRINGFIELD': 'Franconia-Springfield',
+    'FRIENDSHIP HEIGHTS': 'Friendship Heights',
+    'GALLERY PLACE-CHINATOWN': 'Gallery Place',
+    'GEORGIA AVENUE-PETWORTH': 'Georgia Ave-Petworth',
+    'GLENMONT': 'Glenmont',
+    'GREENBELT': 'Greenbelt',
+    'GREENSBORO': 'Greensboro',
+    'GROSVENOR-STRATHMORE': 'Grosvenor-Strathmore',
+    'HUNTINGTON': 'Huntington',
+    'JUDICIARY SQUARE': 'Judiciary Square',
+    'KING STREET-OLD TOWN': 'King St-Old Town',
+    "L'ENFANT PLAZA": "L'Enfant Plaza",
+    'LANDOVER': 'Landover',
+    'DOWNTOWN LARGO': 'Largo Town Center',
+    'MCLEAN': 'McLean',
+    'MCPHERSON SQUARE': 'McPherson Sq',
+    'MEDICAL CENTER': 'Medical Center',
+    'METRO CENTER': 'Metro Center',
+    'MINNESOTA AVENUE': 'Minnesota Ave',
+    'MORGAN BOULEVARD': 'Morgan Boulevard',
+    'MT VERNON SQ 7TH ST-CONVENTION CENTER': 'Mt Vernon Sq',
+    'NAVY YARD-BALLPARK': 'Navy Yard-Ballpark',
+    'NAYLOR ROAD': 'Naylor Road',
+    'NEW CARROLLTON': 'New Carrollton',
+    'NOMA-GALLAUDET U': 'NoMa-Gallaudet U',
+    'PENTAGON': 'Pentagon',
+    'PENTAGON CITY': 'Pentagon City',
+    'POTOMAC AVE': 'Potomac Ave',
+    'HYATTSVILLE CROSSING': "Prince George's Plaza",
+    'RHODE ISLAND AVE-BRENTWOOD': 'Rhode Island Ave',
+    'ROCKVILLE': 'Rockville',
+    'RONALD REAGAN WASHINGTON NATIONAL AIRPORT': 'Ronald Reagan Washington National Airport',
+    'ROSSLYN': 'Rosslyn',
+    'SHADY GROVE': 'Shady Grove',
+    'SHAW-HOWARD UNIVERSITY': 'Shaw-Howard U',
+    'SILVER SPRING': 'Silver Spring',
+    'SMITHSONIAN': 'Smithsonian',
+    'SOUTHERN AVENUE': 'Southern Ave',
+    'SPRING HILL': 'Spring Hill',
+    'STADIUM-ARMORY': 'Stadium-Armory',
+    'SUITLAND': 'Suitland',
+    'TAKOMA': 'Takoma',
+    'TENLEYTOWN-AU': 'Tenleytown-AU',
+    'TWINBROOK': 'Twinbrook',
+    'TYSONS': 'Tysons Corner',
+    'U STREET/AFRICAN-AMER CIVIL WAR MEMORIAL/CARDOZO': 'U Street',
+    'UNION STATION': 'Union Station',
+    'VAN DORN STREET': 'Van Dorn Street',
+    'VAN NESS-UDC': 'Van Ness-UDC',
+    'VIENNA/FAIRFAX-GMU': 'Vienna',
+    'VIRGINIA SQUARE-GMU': 'Virginia Sq-GMU',
+    'WATERFRONT': 'Waterfront',
+    'WEST FALLS CHURCH-VT/UVA': 'West Falls Church',
+    'WEST HYATTSVILLE': 'West Hyattsville',
+    'WHEATON': 'Wheaton',
+    'NORTH BETHESDA': 'White Flint',
+    'WIEHLE-RESTON EAST': 'Wiehle-Reston East',
+    'WOODLEY PARK-ZOO/ADAMS MORGAN': 'Woodley Park',
+}
+
 def load_configs():
     # Load the YAML data from the file
     path = os.path.join(os.path.dirname(__file__), 'config.yaml')
@@ -380,4 +475,21 @@ def combine_model_summaries(model_summaries, labels):
     ]
     df.columns = pd.MultiIndex.from_tuples(tuples)
     df = df.replace(np.nan, '')
+    return df
+
+def interpolate_ols(x, y, new_x):
+    x_with_const = sm.add_constant(x)
+    model = sm.OLS(y, x_with_const).fit()
+    new_x_with_const = sm.add_constant(new_x)
+    predicted_y = model.predict(new_x_with_const)
+    return predicted_y
+
+def interpolate_column_ols(df, x_col, y_col):
+    df_train = df[(df[x_col].notnull()) & (df[y_col].notnull())]
+    return interpolate_ols(df_train[x_col], df_train[y_col], df[x_col])
+
+def fill_nan_with_ols(df, x_col, y_col):
+    df = df.copy()
+    predicted_y = interpolate_column_ols(df, x_col, y_col)
+    df[y_col] = df[y_col].fillna(predicted_y)
     return df

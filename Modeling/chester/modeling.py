@@ -43,7 +43,7 @@ def estimate_models(df, flows, o_vars, d_vars, od_vars, cost_func='exp', constan
     df = combine_model_summaries(
         [grav_summary, ols_summary],
         ['Poisson', 'OLS'])
-    return df, grav_model
+    return df
 
 task_2_model_spec = {
     'flows': 'am_ridership_od',

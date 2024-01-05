@@ -1,3 +1,5 @@
 # Change the name of this file to config.yaml. It will not commit due to gitignore.
 
 box_data_dir: 'path to your locally synched WMATA_DATA folder on Box'
+
+google_api_key: 'api key'

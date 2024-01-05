@@ -38,15 +38,22 @@ def geocode_address(address, api_key):
     return results
 
 
-def get_route_info(orig_lat, orig_lon, dest_lat, dest_lon, api_key, mode='driving', departure_time = 1700053200):
+def get_route_info(orig_lat, orig_lon, dest_lat, dest_lon, api_key, mode='driving', transit_mode=None, departure_time = 1708002000):
     """    
-    Default departure time (1700053200) is Wednesday, November 15, 2023 at 8am ET.
+    Default departure time (1708002000) is Thursday, February 15, 2024 at 8am ET.
+    Based on NCSG's 2024 Maryland Commuter Survey, Thursdays are the day of the week with the highest commuter demand.
+    Mid-February is used as an example date because it is relatively far from commute-affecting holidays.
     Google won't successfully query transit routes for a departure time too far into the future.
 
     Mode options include 'driving', 'transit', 'walking', or 'bicycling'
+
+    Transit mode options can only be used if mode is Transit. They include 'bus', 'subway', 'train' (non-subway heavy rail), 'tram' (light rail), and 'rail' (train, tram, or subway)
     """
     # With old Directions API (includes transit option)
-    geocode_url = f'https://maps.google.com/maps/api/directions/json?origin={orig_lat},{orig_lon}&destination={dest_lat},{dest_lon}&mode={mode}&departure_time={departure_time}&key={api_key}'
+    if transit_mode:
+        geocode_url = f'https://maps.google.com/maps/api/directions/json?origin={orig_lat},{orig_lon}&destination={dest_lat},{dest_lon}&mode={mode}&transit_mode={transit_mode}&departure_time={departure_time}&key={api_key}'
+    else:
+        geocode_url = f'https://maps.google.com/maps/api/directions/json?origin={orig_lat},{orig_lon}&destination={dest_lat},{dest_lon}&mode={mode}&departure_time={departure_time}&key={api_key}'
     results = requests.get(geocode_url)    
     return results.json()
 
@@ -58,14 +65,14 @@ def query_routes(df, api_key, pickle_path='routing_results.pickle'):
     routing_results = {}
     for row in df.itertuples():
         routing_results[row.Index] = {}
-        routing_results[row.Index]['o_lat'] = row.home_location_lat
-        routing_results[row.Index]['o_lon'] = row.home_location_lon
-        routing_results[row.Index]['d_lat'] = row.work_location_lat
-        routing_results[row.Index]['d_lon'] = row.work_location_lon
+        routing_results[row.Index]['lat_o'] = row.lat_o
+        routing_results[row.Index]['lon_o'] = row.lon_o
+        routing_results[row.Index]['lat_d'] = row.lat_d
+        routing_results[row.Index]['lon_d'] = row.lon_d
         for mode in ['driving', 'transit', 'walking', 'bicycling']:
             result = get_route_info(
-                row.home_location_lat, row.home_location_lon, 
-                row.work_location_lat, row.work_location_lon,
+                row.lat_o, row.lon_o, 
+                row.lat_d, row.lon_d,
                 api_key, mode=mode)
             routing_results[row.Index][mode] = result
 

@@ -1,4 +1,5 @@
 import pandas as pd
+import geopandas as gpd
 from collections import OrderedDict
 from utils import *
 import os
@@ -52,6 +53,32 @@ def load_base_records():
     df = df[~df.d.isin(excluded_stations)]
     df = df[df.o != df.d]
     return df
+
+def load_station_points():
+    path = os.path.join(configs.box_data_dir, 'Data/RailStationsEntrances/RailStations2023.geojson')
+    gdf = gpd.read_file(path)
+    columns = OrderedDict([
+        ('STATIONNAM'        , 'station_name')       ,
+        ('geometry'          , 'geometry')           ,
+        ])
+    gdf = trim_and_rename_columns(gdf, columns)
+    # Ensure station names align with those in the master df
+    gdf.station_name = gdf.station_name.map(station_entrances_station_name_map)
+    # Add CRS from shapefile where WMATA Lambert conformal conic defintion is stored (non-standard)
+    path = os.path.join(configs.box_data_dir, 'Data/RailStationsEntrances/RailStationEntrances2023.shp')
+    shapefile = gpd.read_file(path)
+    gdf.crs = shapefile.crs
+    # Reproject into WGS84
+    gdf = gdf.to_crs(4326)
+    return gdf
+
+def add_station_points_to_base_records(master_df):
+    gdf = load_station_points()
+    # Merge origins
+    master_df = master_df.merge(gdf.rename(columns={'station_name':'o', 'geometry':'geometry_o'}), on='o', how='left')
+    # Merge origins
+    master_df = master_df.merge(gdf.rename(columns={'station_name':'d', 'geometry':'geometry_d'}), on='d', how='left')
+    return master_df
 
 def load_travel_time_and_fares(master_df):
     path = os.path.join(configs.box_data_dir, 'Data/railOD_TravelTimesAndFares.xlsx')
@@ -497,6 +524,7 @@ def develop_features():
     np.seterr(divide = 'ignore')
     df = load_base_records()
     dev_functions = [
+        add_station_points_to_base_records,
         load_travel_time_and_fares,
         load_track_miles,
         load_am_ridership,

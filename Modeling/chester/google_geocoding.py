@@ -58,7 +58,7 @@ def get_route_info(orig_lat, orig_lon, dest_lat, dest_lon, api_key, mode='drivin
     return results.json()
 
 
-def query_routes(df, api_key, pickle_path='routing_results.pickle'):
+def query_routes(df, api_key, modes=['driving', ('transit', 'bus')], pickle_path='routing_results.pickle'):
     
     i = 0
     
@@ -69,11 +69,22 @@ def query_routes(df, api_key, pickle_path='routing_results.pickle'):
         routing_results[row.Index]['lon_o'] = row.lon_o
         routing_results[row.Index]['lat_d'] = row.lat_d
         routing_results[row.Index]['lon_d'] = row.lon_d
-        for mode in ['driving', 'transit', 'walking', 'bicycling']:
+        
+        for mode in modes:
+
+            # See if there is a transit mode stored in a tuple
+            try:
+                mode, transit_mode = mode
+            except ValueError:
+                transit_mode = None
+        
             result = get_route_info(
                 row.lat_o, row.lon_o, 
                 row.lat_d, row.lon_d,
-                api_key, mode=mode)
+                api_key, 
+                mode=mode,
+                transit_mode=transit_mode,
+                )
             routing_results[row.Index][mode] = result
 
         i += 1
@@ -166,9 +177,9 @@ def aggregate_legs(legs):
     step_summaries = pd.DataFrame(step_summaries)
     transit_modes = {
         'BUS':'bus',
-        'HEAVY_RAIL':'rail',
-        'SUBWAY':'rail',
-        'TRAM':'rail',
+        'HEAVY_RAIL':'heavy_rail',
+        'SUBWAY':'subway',
+        'TRAM':'tram',
         'WALKING':'walking',
     }
     step_summaries.travel_mode = step_summaries.travel_mode.map(transit_modes)
@@ -180,6 +191,11 @@ def aggregate_legs(legs):
 def summarize_routes(routing_results):  
     
     summary_template = OrderedDict([
+        ('lat_o', np.nan),
+        ('lon_o', np.nan),
+        ('lat_d', np.nan),
+        ('lon_d', np.nan),
+
         ('google_driving_minutes', np.nan),
         ('google_driving_miles', np.nan),
         ('google_driving_path', np.nan), # Store paths as well-known text?
@@ -188,12 +204,21 @@ def summarize_routes(routing_results):
         ('google_transit_miles', np.nan),
         ('google_transit_path', np.nan),
         
-        ('google_transit_train_minutes', np.nan),
-        ('google_transit_train_miles', np.nan),
         ('google_transit_bus_minutes', np.nan),
         ('google_transit_bus_miles', np.nan),
+
+        ('google_transit_heavy_rail_minutes', np.nan),
+        ('google_transit_heavy_rai_miles', np.nan),
+
+        ('google_transit_subway_minutes', np.nan),
+        ('google_transit_subway_miles', np.nan),
+
+        ('google_transit_tram_minutes', np.nan),
+        ('google_transit_tram_miles', np.nan),
+        
         ('google_transit_walking_minutes', np.nan),
         ('google_transit_walking_miles', np.nan),
+        
         ('google_transit_waiting_minutes', np.nan),
         
         ('google_bicycling_minutes', np.nan),
@@ -213,9 +238,18 @@ def summarize_routes(routing_results):
         # Make a copy of the summary template to store results
         record_summary = summary_template.copy()
         # Iterate through modes
-        for mode in ['driving', 'transit', 'walking', 'bicycling']:
+        
+        record_summary['lat_o'] = routing_results[record_id]['lat_o']
+        record_summary['lon_o'] = routing_results[record_id]['lon_o']
+        record_summary['lat_d'] = routing_results[record_id]['lat_d']
+        record_summary['lon_d'] = routing_results[record_id]['lon_d']
+
+        modes = [x for x in ['driving','transit','bicycling','walking'] if x in routing_results[record_id]]
+
+        for mode in modes:
             # Process modes with available routes
             if len(routing_results[record_id][mode]['routes']) > 0:
+                
                 # Aggregate legs and steps
                 leg_summaries, step_summaries = aggregate_legs(routing_results[record_id][mode]['routes'][0]['legs'])
                 
@@ -226,12 +260,18 @@ def summarize_routes(routing_results):
                 
                 # For transit, store summary information for steps
                 if mode == 'transit':
-                    if 'train' in step_summaries:
-                        record_summary['google_transit_train_minutes'] = step_summaries['train']['duration'] / 60
-                        record_summary['google_transit_train_miles'] = step_summaries['train']['distance'] / 60
                     if 'bus' in step_summaries:
                         record_summary['google_transit_bus_minutes'] = step_summaries['bus']['duration'] / 60
                         record_summary['google_transit_bus_miles'] = step_summaries['bus']['distance'] / 60
+                    if 'heavy_rail' in step_summaries:
+                        record_summary['google_transit_heavy_rail_minutes'] = step_summaries['heavy_rail']['duration'] / 60
+                        record_summary['google_transit_heavy_rail_miles'] = step_summaries['heavy_rail']['distance'] / 60
+                    if 'subway' in step_summaries:
+                        record_summary['google_transit_subway_minutes'] = step_summaries['subway']['duration'] / 60
+                        record_summary['google_transit_subway_miles'] = step_summaries['subway']['distance'] / 60
+                    if 'tram' in step_summaries:
+                        record_summary['google_transit_tram_minutes'] = step_summaries['tram']['duration'] / 60
+                        record_summary['google_transit_tram_miles'] = step_summaries['tram']['distance'] / 60
                     if 'walking' in step_summaries:
                         record_summary['google_transit_walking_minutes'] = step_summaries['walking']['duration'] / 60
                         record_summary['google_transit_walking_miles'] = step_summaries['walking']['distance'] / 60
@@ -248,6 +288,9 @@ def summarize_routes(routing_results):
     for col in record_summaries.columns:
         record_summaries[col] = pd.to_numeric(record_summaries[col], errors='ignore')
     # Round numeric values
-    record_summaries = record_summaries.round(2)    
+    record_summaries = record_summaries.round(2)
+
+    # Reset index
+    record_summaries = record_summaries.reset_index(drop=True)
     
     return record_summaries

@@ -4,6 +4,7 @@ import yaml
 from collections import namedtuple
 import os
 import statsmodels.api as sm
+from collections.abc import Iterable
 
 excluded_stations = [
     'Reston Town Center',
@@ -594,3 +595,10 @@ def fill_nan_with_ols(df, x_col, y_col):
     predicted_y = interpolate_column_ols(df, x_col, y_col)
     df[y_col] = df[y_col].fillna(predicted_y)
     return df
+
+def flatten(collection):
+    for x in collection:
+        if isinstance(x, Iterable) and not isinstance(x, str):
+            yield from flatten(x)
+        else:
+            yield x

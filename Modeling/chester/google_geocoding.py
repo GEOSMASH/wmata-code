@@ -4,6 +4,8 @@ import pickle
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
+import random
+import time
 
 def parse_results(results):
     results = results['results']
@@ -90,6 +92,9 @@ def query_routes(df, api_key, modes=['driving', ('transit', 'bus')], pickle_path
         i += 1
         if i % 50 == 0:
             print(f'Completed {i} routes')
+
+        # Randomly wait for between 1 and 20 seconds
+        random_wait(0,5)
         
     if pickle:
         with open(pickle_path, 'wb') as handle:
@@ -208,7 +213,7 @@ def summarize_routes(routing_results):
         ('google_transit_bus_miles', np.nan),
 
         ('google_transit_heavy_rail_minutes', np.nan),
-        ('google_transit_heavy_rai_miles', np.nan),
+        ('google_transit_heavy_rail_miles', np.nan),
 
         ('google_transit_subway_minutes', np.nan),
         ('google_transit_subway_miles', np.nan),
@@ -294,3 +299,19 @@ def summarize_routes(routing_results):
     record_summaries = record_summaries.reset_index(drop=True)
     
     return record_summaries
+
+def assign_random_groups(df, n_groups):
+    df['group'] = np.random.randint(0, n_groups, size=len(df))
+    return df
+
+def random_wait(min, max):
+    sleep_time = random.uniform(min * 10, max * 10) / 10
+    time.sleep(sleep_time)
+
+def split_dataframe_by_id(df, id_column):
+    # Initialize an empty dictionary to store the resulting DataFrames
+    id_dataframes = {}
+    # Group the DataFrame by the ID column and iterate through groups
+    for group_id, group_data in df.groupby(id_column):
+        id_dataframes[group_id] = group_data.copy()
+    return id_dataframes

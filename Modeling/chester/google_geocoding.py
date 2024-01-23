@@ -4,6 +4,7 @@ import pickle
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import random
 import time
 
@@ -267,19 +268,19 @@ def summarize_routes(routing_results):
                 if mode == 'transit':
                     if 'bus' in step_summaries:
                         record_summary['google_transit_bus_minutes'] = step_summaries['bus']['duration'] / 60
-                        record_summary['google_transit_bus_miles'] = step_summaries['bus']['distance'] / 60
+                        record_summary['google_transit_bus_miles'] = step_summaries['bus']['distance'] / 1609.34
                     if 'heavy_rail' in step_summaries:
                         record_summary['google_transit_heavy_rail_minutes'] = step_summaries['heavy_rail']['duration'] / 60
-                        record_summary['google_transit_heavy_rail_miles'] = step_summaries['heavy_rail']['distance'] / 60
+                        record_summary['google_transit_heavy_rail_miles'] = step_summaries['heavy_rail']['distance'] / 1609.34
                     if 'subway' in step_summaries:
                         record_summary['google_transit_subway_minutes'] = step_summaries['subway']['duration'] / 60
-                        record_summary['google_transit_subway_miles'] = step_summaries['subway']['distance'] / 60
+                        record_summary['google_transit_subway_miles'] = step_summaries['subway']['distance'] / 1609.34
                     if 'tram' in step_summaries:
                         record_summary['google_transit_tram_minutes'] = step_summaries['tram']['duration'] / 60
-                        record_summary['google_transit_tram_miles'] = step_summaries['tram']['distance'] / 60
+                        record_summary['google_transit_tram_miles'] = step_summaries['tram']['distance'] / 1609.34
                     if 'walking' in step_summaries:
                         record_summary['google_transit_walking_minutes'] = step_summaries['walking']['duration'] / 60
-                        record_summary['google_transit_walking_miles'] = step_summaries['walking']['distance'] / 60
+                        record_summary['google_transit_walking_miles'] = step_summaries['walking']['distance'] / 1609.34
                     total_step_duration = pd.DataFrame(step_summaries).T.duration.sum()
                     record_summary['google_transit_waiting_minutes'] = (leg_summaries.duration / 60) - (total_step_duration / 60) 
                 
@@ -315,3 +316,113 @@ def split_dataframe_by_id(df, id_column):
     for group_id, group_data in df.groupby(id_column):
         id_dataframes[group_id] = group_data.copy()
     return id_dataframes
+
+def construct_ods_for_routing(gdf):
+    # Extract lats and lons
+    gdf['lat'] = gdf.geometry.y
+    gdf['lon'] = gdf.geometry.x
+    # Make cartesian product of stations (all OD pairs)
+    df = pd.merge(gdf[['station_name','lat','lon']], gdf[['station_name','lat','lon']], how='cross', suffixes=('_o', '_d'))
+    # Remove diagonal
+    return df[df.station_name_o != df.station_name_d]
+
+def construct_grouped_ods_for_routing(gdf):
+    df = construct_ods_for_routing(gdf)
+    # Split into 10 randomly-assigned groups
+    df = assign_random_groups(df, 10)
+    return split_dataframe_by_id(df, 'group')
+
+def query_routes(df, modes):
+    name = '_'.join(flatten(modes))
+    name = f'{name}_group{group}'
+    dict = query_routes(df, configs.google_api_key, pickle_path=f'{name}_routes.pickle', modes=modes)
+    results_df = summarize_routes(dict)
+    results_df.to_parquet(f'{name}_summaries.parquet')
+
+def query_grouped_routes(dfs, modes):
+    for group in dfs.keys():
+    # for group in [5,6,7,8,9]:
+        df = dfs[group]
+        query_routes(df, modes)
+
+def join_station_names_to_summeries(summaries, df):
+    # Construct named points for o and d stations
+    # (In theory, we could just do one because they are identical with a full OD matrix)
+    o_stations = df.groupby('station_name_o').agg({'lat_o':'first','lon_o':'first'})
+    o_stations = gpd.GeoDataFrame(o_stations, geometry=gpd.points_from_xy(o_stations.lon_o, o_stations.lat_o))
+    o_stations = o_stations.drop(columns=['lat_o','lon_o']).reset_index()
+    d_stations = df.groupby('station_name_d').agg({'lat_d':'first','lon_d':'first'})
+    d_stations = gpd.GeoDataFrame(d_stations, geometry=gpd.points_from_xy(d_stations.lon_d, d_stations.lat_d))
+    d_stations = d_stations.drop(columns=['lat_d','lon_d']).reset_index()
+    # Spatially join station names
+    summaries = gpd.GeoDataFrame(summaries, geometry=gpd.points_from_xy(summaries.lon_o, summaries.lat_o))
+    summaries = gpd.sjoin_nearest(summaries, o_stations)
+    summaries = summaries.drop(columns=['geometry','index_right'])
+    summaries = gpd.GeoDataFrame(summaries, geometry=gpd.points_from_xy(summaries.lon_d, summaries.lat_d))
+    summaries = gpd.sjoin_nearest(summaries, d_stations)
+    summaries = summaries.drop(columns=['geometry','index_right'])
+    return summaries
+
+def construct_driving_summary(df):
+    summaries = pd.read_parquet('driving_summaries.parquet')
+    summaries = join_station_names_to_summeries(summaries, df)
+    return summaries[[
+        'station_name_o',
+        'lat_o',
+        'lon_o',
+        'station_name_d',
+        'lat_d',
+        'lon_d',
+        'google_driving_minutes',
+        'google_driving_miles',
+    ]]
+
+def construct_bus_transit_summary(dfs):
+    df = pd.concat(dfs.values())
+    summaries = []
+    for i, df in dfs.items():
+        summary = pd.read_parquet(f'transit_bus_group{i}_summaries.parquet')
+        summary = join_station_names_to_summeries(summary, df)
+        summary = summary[[
+            'station_name_o',
+            'lat_o',
+            'lon_o',
+            'station_name_d',
+            'lat_d',
+            'lon_d',
+            'google_transit_minutes',
+            'google_transit_bus_minutes',
+            'google_transit_heavy_rail_minutes',
+            'google_transit_subway_minutes',
+            'google_transit_tram_minutes',
+            'google_transit_walking_minutes',
+            'google_transit_waiting_minutes',
+            ]]
+        summaries.append(summary)
+    return pd.concat(summaries, axis=0)
+
+def calculate_bus_competativeness_index(metro_df, bus_df):
+    # Reconcile station name differences
+    metro_df = metro_df.replace({
+        'McPherson Square': 'McPherson Sq',
+        'Shaw-Howard Univ': 'Shaw-Howard U', 
+        'Virginia Square-GMU': 'Virginia Sq-GMU',
+    })
+    metro_df = metro_df.rename(columns={
+        'O_MSTN_ID': 'o',
+        'D_MSTN_ID': 'd',
+        'O_PRIMARY_NAME': 'station_name_o',
+        'D_PRIMARY_NAME': 'station_name_d',
+        'TRAVEL_TIME': 'metro_minutes',
+    })
+    df = bus_df.merge(
+        metro_df[['o','station_name_o','d','station_name_d','metro_minutes']], 
+        on=['station_name_o','station_name_d'], 
+        how='right')
+    df['bus_competativeness_index'] = df.metro_minutes / df.google_transit_minutes
+    df.loc[df.google_transit_minutes.isnull(), 'bus_competativeness_index'] = 0
+    df.loc[df.station_name_o == df.station_name_d, 'bus_competativeness_index'] = 1
+    return df
+
+
+

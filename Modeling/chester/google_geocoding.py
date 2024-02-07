@@ -94,7 +94,7 @@ def query_routes(df, api_key, modes=['driving', ('transit', 'bus')], pickle_path
         if i % 50 == 0:
             print(f'Completed {i} routes')
 
-        # Randomly wait for between 1 and 20 seconds
+        # Randomly wait for between 1 and 5 seconds
         random_wait(0,5)
         
     if pickle:

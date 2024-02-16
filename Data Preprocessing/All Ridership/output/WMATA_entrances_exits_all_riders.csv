@@ -1,0 +1,92 @@
+,ID,START_PLACE_NAME,entrance_passenger,ID_1,END_PLACE_NAME,exit_passenger
+0,MSTN_001,Anacostia,40970,MSTN_001,Anacostia,42134
+1,MSTN_002,Archives-Navy Memorial,76961,MSTN_002,Archives-Navy Memorial,77261
+2,MSTN_003,Benning Road,23432,MSTN_003,Benning Road,22922
+3,MSTN_004,Brookland,62047,MSTN_004,Brookland,61909
+4,MSTN_005,Capitol South,79204,MSTN_005,Capitol South,81996
+5,MSTN_006,Cleveland Park,47161,MSTN_006,Cleveland Park,50098
+6,MSTN_007,Columbia Heights,145682,MSTN_007,Columbia Heights,149328
+7,MSTN_008,Congress Heights,21003,MSTN_008,Congress Heights,19476
+8,MSTN_009,Deanwood,10338,MSTN_009,Deanwood,9360
+9,MSTN_010,Dupont Circle,179972,MSTN_010,Dupont Circle,177896
+10,MSTN_011,Eastern Market,67273,MSTN_011,Eastern Market,70746
+11,MSTN_012,Farragut North,151641,MSTN_012,Farragut North,151537
+12,MSTN_013,Farragut West,135398,MSTN_013,Farragut West,134855
+13,MSTN_014,Federal Center SW,38339,MSTN_014,Federal Center SW,36722
+14,MSTN_015,Federal Triangle,54974,MSTN_015,Federal Triangle,54362
+15,MSTN_016,Foggy Bottom,205432,MSTN_016,Foggy Bottom,201294
+16,MSTN_017,Fort Totten,91867,MSTN_017,Fort Totten,95920
+17,MSTN_018,Friendship Heights,68890,MSTN_018,Friendship Heights,68262
+18,MSTN_019,Gallery Place-Chinatown,214496,MSTN_019,Gallery Place-Chinatown,210190
+19,MSTN_020,Georgia Avenue-Petworth,68146,MSTN_020,Georgia Avenue-Petworth,64596
+20,MSTN_021,Judiciary Square,49222,MSTN_021,Judiciary Square,51590
+21,MSTN_022,L'Enfant Plaza,152010,MSTN_022,L'Enfant Plaza,162726
+22,MSTN_023,McPherson Square,98922,MSTN_023,McPherson Square,100614
+23,MSTN_024,Metro Center,219753,MSTN_024,Metro Center,217467
+24,MSTN_025,Minnesota Avenue,11221,MSTN_025,Minnesota Avenue,13883
+25,MSTN_026,Mt. Vernon Square-UDC,54668,MSTN_026,Mt. Vernon Square-UDC,56305
+26,MSTN_027,Navy Yard,152525,MSTN_027,Navy Yard,147403
+27,MSTN_028,New York Ave,116581,MSTN_028,New York Ave,114245
+28,MSTN_029,Potomac Avenue,37569,MSTN_029,Potomac Avenue,35464
+29,MSTN_030,Rhode Island Avenue,65495,MSTN_030,Rhode Island Avenue,66662
+30,MSTN_031,Shaw-Howard University,54329,MSTN_031,Shaw-Howard University,54103
+31,MSTN_032,Smithsonian,116328,MSTN_032,Smithsonian,119193
+32,MSTN_033,Stadium-Armory,34324,MSTN_033,Stadium-Armory,34171
+33,MSTN_034,Takoma,50036,MSTN_034,Takoma,50191
+34,MSTN_035,Tenleytown-AU,59122,MSTN_035,Tenleytown-AU,66358
+35,MSTN_036,U Street-Cardozo,84773,MSTN_036,U Street-Cardozo,84286
+36,MSTN_037,Union Station,218339,MSTN_037,Union Station,204229
+37,MSTN_038,Van Ness-UDC,55761,MSTN_038,Van Ness-UDC,53421
+38,MSTN_039,Waterfront,44580,MSTN_039,Waterfront,43131
+39,MSTN_040,Woodley Park-Zoo,80619,MSTN_040,Woodley Park-Zoo,78914
+40,MSTN_041,Shady Grove,83819,MSTN_041,Shady Grove,85314
+41,MSTN_042,Rockville,34522,MSTN_042,Rockville,34239
+42,MSTN_043,Twinbrook,39827,MSTN_043,Twinbrook,39296
+43,MSTN_044,Glenmont,51417,MSTN_044,Glenmont,50660
+44,MSTN_045,White Flint,30987,MSTN_045,White Flint,31609
+45,MSTN_046,Wheaton,35269,MSTN_046,Wheaton,36228
+46,MSTN_047,Grosvenor,38465,MSTN_047,Grosvenor,37627
+47,MSTN_048,Forest Glen,20012,MSTN_048,Forest Glen,19328
+48,MSTN_049,Greenbelt,47482,MSTN_049,Greenbelt,48954
+49,MSTN_050,Medical Center,49389,MSTN_050,Medical Center,49295
+50,MSTN_051,Silver Spring,106474,MSTN_051,Silver Spring,106857
+51,MSTN_052,Bethesda,82457,MSTN_052,Bethesda,83752
+52,MSTN_053,College Park-U of MD,41481,MSTN_053,College Park-U of MD,40865
+53,MSTN_054,Prince George's Plaza,47800,MSTN_054,Prince George's Plaza,48304
+54,MSTN_055,West Hyattsville,42111,MSTN_055,West Hyattsville,39990
+55,MSTN_056,New Carrollton,40219,MSTN_056,New Carrollton,39895
+56,MSTN_057,Landover,11228,MSTN_057,Landover,11736
+57,MSTN_058,Cheverly,7019,MSTN_058,Cheverly,6925
+58,MSTN_059,West Falls Church,14008,MSTN_059,West Falls Church,14317
+59,MSTN_060,Rosslyn,111828,MSTN_060,Rosslyn,108854
+60,MSTN_061,Court House,56261,MSTN_061,Court House,58205
+61,MSTN_062,Addison Road,19259,MSTN_062,Addison Road,20674
+62,MSTN_063,Clarendon,44611,MSTN_063,Clarendon,48386
+63,MSTN_064,East Falls Church,38493,MSTN_064,East Falls Church,40354
+64,MSTN_065,Arlington Cemetery,27714,MSTN_065,Arlington Cemetery,26554
+65,MSTN_066,Virginia Square-GMU,30968,MSTN_066,Virginia Square-GMU,30720
+66,MSTN_067,Dunn Loring,26357,MSTN_067,Dunn Loring,27116
+67,MSTN_068,Ballston,87634,MSTN_068,Ballston,87298
+68,MSTN_069,Vienna,60880,MSTN_069,Vienna,61743
+69,MSTN_070,Pentagon,98040,MSTN_070,Pentagon,94436
+70,MSTN_071,Pentagon City,120998,MSTN_071,Pentagon City,125244
+71,MSTN_072,Crystal City,96911,MSTN_072,Crystal City,98091
+72,MSTN_073,Reagan Washington National Airport,109475,MSTN_073,Reagan Washington National Airport,85574
+73,MSTN_074,Naylor Road,14046,MSTN_074,Naylor Road,14589
+74,MSTN_075,Suitland,26307,MSTN_075,Suitland,27671
+75,MSTN_076,Southern Avenue,37072,MSTN_076,Southern Avenue,38492
+76,MSTN_077,Branch Avenue,32425,MSTN_077,Branch Avenue,33362
+77,MSTN_078,Braddock Road,40710,MSTN_078,Braddock Road,43660
+78,MSTN_079,King Street,70915,MSTN_079,King Street,73954
+79,MSTN_080,Eisenhower Avenue,17162,MSTN_080,Eisenhower Avenue,16432
+80,MSTN_081,Van Dorn Street,21442,MSTN_081,Van Dorn Street,22252
+81,MSTN_082,Huntington,52728,MSTN_082,Huntington,53841
+82,MSTN_083,Franconia-Springfield,51161,MSTN_083,Franconia-Springfield,54771
+83,MSTN_084,Capitol Heights,17617,MSTN_084,Capitol Heights,17065
+84,MSTN_085,Largo Town Center,30200,MSTN_085,Largo Town Center,30988
+85,MSTN_086,Morgan Blvd.,11251,MSTN_086,Morgan Blvd.,11643
+86,MSTN_087,McLean,16688,MSTN_087,McLean,16714
+87,MSTN_088,Tysons Corner,30256,MSTN_088,Tysons Corner,31054
+88,MSTN_089,Greensboro,10246,MSTN_089,Greensboro,10562
+89,MSTN_090,Spring Hill,9059,MSTN_090,Spring Hill,9301
+90,MSTN_091,Wiehle,62358,MSTN_091,Wiehle,64450

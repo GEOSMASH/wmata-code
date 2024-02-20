@@ -402,6 +402,12 @@ def construct_bus_transit_summary(dfs):
     return pd.concat(summaries, axis=0)
 
 def calculate_bus_competativeness_index(metro_df, bus_df):
+    """
+    Calculated as the quotient of metro travel time over bus travel time
+    0 represents a trip that google can't find a reasonable for by bus
+    1 represents a trip that's just as fast by bus as by metro
+    >1 represents a trip that's faster by bus than metro
+    """
     # Reconcile station name differences
     metro_df = metro_df.replace({
         'McPherson Square': 'McPherson Sq',

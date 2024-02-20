@@ -7,6 +7,9 @@ import pandas as pd
 import geopandas as gpd
 import random
 import time
+import os
+
+import utils
 
 def parse_results(results):
     results = results['results']
@@ -150,6 +153,11 @@ def decode_polyline(polyline):
 
     return linestring
 
+def o_coord_from_polyline(polyline):
+    return [x for x in decode_polyline(polyline).coords][0]
+
+def d_coord_from_polyline(polyline):
+    return [x for x in decode_polyline(polyline).coords][-1]
 
 def aggregate_legs(legs):
     leg_summaries = []
@@ -335,7 +343,7 @@ def construct_grouped_ods_for_routing(gdf):
 def query_routes(df, modes):
     name = '_'.join(flatten(modes))
     name = f'{name}_group{group}'
-    dict = query_routes(df, configs.google_api_key, pickle_path=f'{name}_routes.pickle', modes=modes)
+    dict = query_routes(df, utils.configs.google_api_key, pickle_path=f'{name}_routes.pickle', modes=modes)
     results_df = summarize_routes(dict)
     results_df.to_parquet(f'{name}_summaries.parquet')
 
@@ -345,7 +353,7 @@ def query_grouped_routes(dfs, modes):
         df = dfs[group]
         query_routes(df, modes)
 
-def join_station_names_to_summeries(summaries, df):
+def join_station_names_to_summeries(summaries, df, path_column):
     # Construct named points for o and d stations
     # (In theory, we could just do one because they are identical with a full OD matrix)
     o_stations = df.groupby('station_name_o').agg({'lat_o':'first','lon_o':'first'})
@@ -355,6 +363,14 @@ def join_station_names_to_summeries(summaries, df):
     d_stations = gpd.GeoDataFrame(d_stations, geometry=gpd.points_from_xy(d_stations.lon_d, d_stations.lat_d))
     d_stations = d_stations.drop(columns=['lat_d','lon_d']).reset_index()
     # Spatially join station names
+    # Get more precise coordinates for the start and end of the path    
+    summaries['o_coords'] = summaries[path_column].apply(o_coord_from_polyline)
+    summaries['lon_o'] = summaries['o_coords'].apply(lambda x: x[0])
+    summaries['lat_o'] = summaries['o_coords'].apply(lambda x: x[1])
+    summaries['d_coords'] = summaries[path_column].apply(d_coord_from_polyline)
+    summaries['lon_d'] = summaries['d_coords'].apply(lambda x: x[0])
+    summaries['lat_d'] = summaries['d_coords'].apply(lambda x: x[1])
+    # Convert to a geodataframe for spatial joining
     summaries = gpd.GeoDataFrame(summaries, geometry=gpd.points_from_xy(summaries.lon_o, summaries.lat_o))
     summaries = gpd.sjoin_nearest(summaries, o_stations)
     summaries = summaries.drop(columns=['geometry','index_right'])
@@ -364,8 +380,10 @@ def join_station_names_to_summeries(summaries, df):
     return summaries
 
 def construct_driving_summary(df):
-    summaries = pd.read_parquet('driving_summaries.parquet')
-    summaries = join_station_names_to_summeries(summaries, df)
+    parquet_path = '2024 Data Collection/Google Travel Times/raw data/driving_summaries.parquet'
+    parquet_path = os.path.join(utils.configs.box_data_dir, parquet_path)
+    summaries = pd.read_parquet(parquet_path)   
+    summaries = join_station_names_to_summeries(summaries, df, 'google_driving_path')
     return summaries[[
         'station_name_o',
         'lat_o',
@@ -381,8 +399,11 @@ def construct_bus_transit_summary(dfs):
     df = pd.concat(dfs.values())
     summaries = []
     for i, df in dfs.items():
-        summary = pd.read_parquet(f'transit_bus_group{i}_summaries.parquet')
-        summary = join_station_names_to_summeries(summary, df)
+        parquet_path = f'transit_bus_group{i}_summaries.parquet'
+        parquet_path = os.path.join('2024 Data Collection/Google Travel Times/raw data', parquet_path)
+        parquet_path = os.path.join(utils.configs.box_data_dir, parquet_path)
+        summary = pd.read_parquet(parquet_path)
+        summary = join_station_names_to_summeries(summary, df, 'google_transit_path')
         summary = summary[[
             'station_name_o',
             'lat_o',

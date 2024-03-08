@@ -1,5 +1,4 @@
 import pandas as pd
-import geopandas as gpd
 from collections import OrderedDict
 from utils import *
 import os
@@ -53,32 +52,6 @@ def load_base_records():
     df = df[~df.d.isin(excluded_stations)]
     df = df[df.o != df.d]
     return df
-
-def load_station_points():
-    path = os.path.join(configs.box_data_dir, 'Data/RailStationsEntrances/RailStations2023.geojson')
-    gdf = gpd.read_file(path)
-    columns = OrderedDict([
-        ('STATIONNAM'        , 'station_name')       ,
-        ('geometry'          , 'geometry')           ,
-        ])
-    gdf = trim_and_rename_columns(gdf, columns)
-    # Ensure station names align with those in the master df
-    gdf.station_name = gdf.station_name.map(station_entrances_station_name_map)
-    # Add CRS from shapefile where WMATA Lambert conformal conic defintion is stored (non-standard)
-    path = os.path.join(configs.box_data_dir, 'Data/RailStationsEntrances/RailStationEntrances2023.shp')
-    shapefile = gpd.read_file(path)
-    gdf.crs = shapefile.crs
-    # Reproject into WGS84
-    gdf = gdf.to_crs(4326)
-    return gdf
-
-def add_station_points_to_base_records(master_df):
-    gdf = load_station_points()
-    # Merge origins
-    master_df = master_df.merge(gdf.rename(columns={'station_name':'o', 'geometry':'geometry_o'}), on='o', how='left')
-    # Merge origins
-    master_df = master_df.merge(gdf.rename(columns={'station_name':'d', 'geometry':'geometry_d'}), on='d', how='left')
-    return master_df
 
 def load_travel_time_and_fares(master_df):
     path = os.path.join(configs.box_data_dir, 'Data/railOD_TravelTimesAndFares.xlsx')
@@ -238,6 +211,26 @@ def calculate_total_ridership_and_parking_users(master_df):
     return master_df
 
 
+def load_bus_travel_time(master_df):
+    # path = os.path.join(configs.box_data_dir, 'Data Preprocessing/Bus Travel Time/output/busttpermile_ML.xlsx')
+    path = os.path.join(configs.box_data_dir, 'Data/OD Bus Travel Times Flat MSTN.xlsx')
+    df = pd.read_excel(path)
+    columns = OrderedDict([
+        ('O_MSTN_ID'                     , 'id_d')                     ,
+        ('D_MSTN_ID'                     , 'id_o')                     ,
+        ('Travel Time'                   , 'bus_tt_od')                ,
+        ('Transfers'                     , 'bus_transfers_od')         ,
+        ])
+    df = trim_and_rename_columns(df, columns)
+    master_df = merge_with_master(master_df, df)
+    fill_na_columns = [
+        'bus_tt_od',
+        'bus_transfers_od',
+        ]
+    master_df = fill_nan_with_zero(master_df, fill_na_columns)
+    return master_df
+
+
 def load_am_auto_travel_time(master_df):
     path = os.path.join(configs.box_data_dir, 'Data Preprocessing/Interpolated Auto Travel Times/output/am_interpolated_auto_times.csv')
     df = pd.read_csv(path)
@@ -247,7 +240,6 @@ def load_am_auto_travel_time(master_df):
         ('id_o'                     , 'id_o')                     ,
         ('id_d'                     , 'id_d')                     ,
         ('new_auto_tt2'             , 'am_auto_tt_od')            ,
-        ('new_auto_tt_per_mile2'    , 'am_auto_tt_per_track_mile_od')   ,
         ])
     df = trim_and_rename_columns(df, columns)
     master_df = merge_with_master(master_df, df)
@@ -263,7 +255,6 @@ def load_pm_auto_travel_time(master_df):
         ('id_o'                     , 'id_o')                     ,
         ('id_d'                     , 'id_d')                     ,
         ('new_auto_tt2'             , 'pm_auto_tt_od')            ,
-        ('new_auto_tt_per_mile2'    , 'pm_auto_tt_per_track_mile_od')   ,
         ])
     df = trim_and_rename_columns(df, columns)
     master_df = merge_with_master(master_df, df)
@@ -278,49 +269,12 @@ def load_off_peak_auto_travel_time(master_df):
     df['id_o'] = df.pairs.apply(lambda x: x.split('0M')[0])
     df['id_d'] = df.pairs.apply(lambda x: 'M' + x.split('0M')[1])
     columns = OrderedDict([
-        ('id_o'                     , 'id_o')                           ,
-        ('id_d'                     , 'id_d')                           ,
-        ('new_auto_tt2'             , 'off_peak_auto_tt_od')            ,
-        ('new_auto_tt_per_mile2'    , 'off_peak_auto_tt_per_track_mile_od')   ,
+        ('id_o'                     , 'id_o')                     ,
+        ('id_d'                     , 'id_d')                     ,
+        ('new_auto_tt2'             , 'off_peak_auto_tt_od')      ,
         ])
     df = trim_and_rename_columns(df, columns)
     master_df = merge_with_master(master_df, df)
-    return master_df
-
-
-def load_bus_travel_time(master_df):
-    # path = os.path.join(configs.box_data_dir, 'Data Preprocessing/Bus Travel Time/output/busttpermile_ML.xlsx')
-    path = os.path.join(configs.box_data_dir, 'Data/OD Bus Travel Times Flat MSTN.xlsx')
-    df = pd.read_excel(path)
-    columns = OrderedDict([
-        ('O_MSTN_ID'                     , 'id_d')                     ,
-        ('D_MSTN_ID'                     , 'id_o')                     ,
-        ('Travel Time'                   , 'bus_tt_od')                ,
-        ('Transfers'                     , 'bus_transfers_od')         ,
-        ])
-    df = trim_and_rename_columns(df, columns)
-    master_df = merge_with_master(master_df, df)
-    fill_na_columns = [
-        'bus_transfers_od',
-        ]
-    master_df = fill_nan_with_zero(master_df, fill_na_columns)
-    master_df = fill_nan_with_ols(master_df, 'off_peak_auto_tt_od', 'bus_tt_od')
-    return master_df
-
-
-def load_auto_miles(master_df):
-    path = os.path.join(configs.box_data_dir, 'Data/25_35_drive_times_distances.xlsx')
-    df = pd.read_excel(path)
-    columns = OrderedDict([
-        ('origins'                  , 'o')               ,
-        ('destinations'             , 'd')               ,
-        ('speed_mph'                , 'auto_speed_od')   ,
-        ('distance'                 , 'auto_miles_od')   ,
-        ])
-    df = trim_and_rename_columns(df, columns)
-    df.o = df.o.map(auto_miles_station_name_map)
-    df.d = df.d.map(auto_miles_station_name_map)
-    master_df = merge_with_master(master_df, df, on=['o', 'd'])
     return master_df
 
 
@@ -458,100 +412,39 @@ def load_sop(master_df):
     return master_df
 
 
-def calculate_sums_from_columns(master_df):
-    sums = {
-        'all_jobs_o': ('nine_to_five_jobs_o', 'night_weekend_jobs_o'),
-        'all_jobs_d': ('nine_to_five_jobs_d', 'night_weekend_jobs_d'),
-    }
-    for col, (a,b) in sums.items():
-        master_df[col] = master_df[a] + master_df[b]
-    return master_df
-
-def calculate_rates_from_constants(master_df):
-    rates = {
-        'total_households_within_half_mi_1000s_o': ('total_households_within_half_mi_o', 1000),
-        'total_households_within_half_mi_1000s_d': ('total_households_within_half_mi_d', 1000),
-        'all_jobs_1000s_o': ('all_jobs_o', 1000),
-        'all_jobs_1000s_d': ('all_jobs_d', 1000),
-    }
-    for col, (a,b) in rates.items():
-        master_df[col] = master_df[a] / b
-    return master_df
-
-
-def calculate_rates_from_columns(master_df):
-    rates = {
-        'peak_fare_per_track_mile_od': ('peak_fare_od','track_miles_od'),
-        'off_peak_fare_per_track_mile_od': ('off_peak_fare_od','track_miles_od'),
-        'bus_tt_per_track_mile_od': ('bus_tt_od', 'track_miles_od'),
-    }
-    for col, (a,b) in rates.items():
-        master_df[col] = master_df[a] / master_df[b]
-    return master_df
-
-
 def calculate_interactions(master_df):
     interactions = {
-        'm25_station_o*m25_station_d': ('m25_station_o','m25_station_d'),
+        'm25_station_o*m25_station_d': ('m25_station_o','m25_station_d')
     }
     for col, (a,b) in interactions.items():
         master_df[col] = master_df[a] * master_df[b]
     return master_df
 
 
-def calculate_ln_transformations(master_df):
-    transformations = [
-        'peak_fare_per_track_mile_od',
-        'off_peak_fare_per_track_mile_od',
-        'am_auto_tt_per_track_mile_od',
-        'pm_auto_tt_per_track_mile_od',
-        'off_peak_auto_tt_per_track_mile_od',
-        'bus_tt_per_track_mile_od',
-        'am_parking_user_od',
-        'pm_parking_user_od',
-        'off_peak_parking_user_od',
-        'total_households_within_half_mi_1000s_o',
-        'total_households_within_half_mi_1000s_d',
-    ]
-    for var in transformations:
-        master_df[f'ln_{var}'] = np.log(master_df[var])
-        # replace inf with 0
-        master_df[f'ln_{var}'] = master_df[f'ln_{var}'].replace([np.inf, -np.inf], 0)
-    return master_df
-
-
 def develop_features():
-    np.seterr(divide = 'ignore')
     df = load_base_records()
     dev_functions = [
-        add_station_points_to_base_records,
         load_travel_time_and_fares,
         load_track_miles,
         load_am_ridership,
         load_pm_ridership,
         load_off_peak_ridership,
         calculate_total_ridership_and_parking_users,
+        load_bus_travel_time,
         load_am_auto_travel_time,
         load_pm_auto_travel_time,
         load_off_peak_auto_travel_time,
-        load_bus_travel_time,
-        load_auto_miles,
         load_m25_stations,
         load_median_hh_income,
         load_nine_to_five_jobs,
         load_night_and_weekend_jobs,
         load_school_jobs,
         load_sop,
-        calculate_sums_from_columns,
-        calculate_rates_from_constants,
-        calculate_rates_from_columns,
         calculate_interactions,
-        calculate_ln_transformations,
         ]
     print(f'{len(df)} initial records')
     for func in dev_functions:
         df = func(df)
         check_for_null(df)
         print(f'{len(df)} complete records from {func.__name__}')
-    np.seterr(divide = 'warn')
     return df
